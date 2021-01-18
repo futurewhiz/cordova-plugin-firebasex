@@ -178,6 +178,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
                 if(data.containsKey("notification_android_tag")) tag = data.get("notification_android_tag");
                 if(data.containsKey("notification_android_image")) image = data.get("notification_android_image");
                 if(data.containsKey("notification_android_image_type")) imageType = data.get("notification_android_image_type");
+                if(data.containsKey("notification_android_tag")) tag = data.get("notification_android_tag");
             }
 
             if (TextUtils.isEmpty(id)) {
@@ -413,6 +414,13 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
 
             // Build notification
             Notification notification = notificationBuilder.build();
+            // hard-coded zero to be consistent with Google FCM's default behaviour and
+            // it enables to bulk delete notifications with the same tag.
+            int notificationId = 0;
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            // Clear active notifications with the same tag
+            notificationManager.cancel(tag, notificationId);
 
              // hard-coded zero to be consistent with Google FCM's default behaviour and
              // it enables to bulk delete notifications with the same tag.
