@@ -131,6 +131,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             String priority = null;
             String image = null;
             String imageType = null;
+            String tag = null;
             boolean foregroundNotification = false;
 
             Map<String, String> data = remoteMessage.getData();
@@ -174,6 +175,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
                 if(data.containsKey("notification_android_icon")) icon = data.get("notification_android_icon");
                 if(data.containsKey("notification_android_visibility")) visibility = data.get("notification_android_visibility");
                 if(data.containsKey("notification_android_priority")) priority = data.get("notification_android_priority");
+                if(data.containsKey("notification_android_tag")) tag = data.get("notification_android_tag");
                 if(data.containsKey("notification_android_image")) image = data.get("notification_android_image");
                 if(data.containsKey("notification_android_image_type")) imageType = data.get("notification_android_image_type");
             }
@@ -198,18 +200,19 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Priority: " + priority);
             Log.d(TAG, "Image: " + image);
             Log.d(TAG, "image Type: " + imageType);
+            Log.d(TAG, "Tag: " + priority);
 
 
             if (!TextUtils.isEmpty(body) || !TextUtils.isEmpty(title) || (data != null && !data.isEmpty())) {
                 boolean showNotification = (FirebasePlugin.inBackground() || !FirebasePlugin.hasNotificationsCallback() || foregroundNotification) && (!TextUtils.isEmpty(body) || !TextUtils.isEmpty(title));
-                sendMessage(remoteMessage, data, messageType, id, title, body, bodyHtml, showNotification, sound, vibrate, light, color, icon, channelId, priority, visibility, image, imageType);
+                sendMessage(remoteMessage, data, messageType, id, title, body, bodyHtml, showNotification, sound, vibrate, light, color, icon, channelId, priority, visibility, image, imageType, tag);
             }
         }catch (Exception e){
             FirebasePlugin.handleExceptionWithoutContext(e);
         }
     }
 
-    private void sendMessage(RemoteMessage remoteMessage, Map<String, String> data, String messageType, String id, String title, String body, String bodyHtml, boolean showNotification, String sound, String vibrate, String light, String color, String icon, String channelId, String priority, String visibility, String image, String imageType) {
+    private void sendMessage(RemoteMessage remoteMessage, Map<String, String> data, String messageType, String id, String title, String body, String bodyHtml, boolean showNotification, String sound, String vibrate, String light, String color, String icon, String channelId, String priority, String visibility, String image, String imageType, String tag) {
         Log.d(TAG, "sendMessage(): messageType="+messageType+"; showNotification="+showNotification+"; id="+id+"; title="+title+"; body="+body+"; sound="+sound+"; vibrate="+vibrate+"; light="+light+"; color="+color+"; icon="+icon+"; channel="+channelId+"; data="+data.toString());
         Bundle bundle = new Bundle();
         for (String key : data.keySet()) {
@@ -411,10 +414,17 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             // Build notification
             Notification notification = notificationBuilder.build();
 
+             // hard-coded zero to be consistent with Google FCM's default behaviour and
+             // it enables to bulk delete notifications with the same tag.
+             int notificationId = 0;
+             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+             // Clear active notifications with the same tag
+             notificationManager.cancel(tag, notificationId);
+
             // Display notification
-            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             Log.d(TAG, "show notification: "+notification.toString());
-            notificationManager.notify(id.hashCode(), notification);
+            notificationManager.notify(tag, notificationId, notification);
         }
         // Send to plugin
         FirebasePlugin.sendMessage(bundle, this.getApplicationContext());
