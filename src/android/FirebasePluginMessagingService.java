@@ -98,6 +98,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             String channelId = null;
             String visibility = null;
             String priority = null;
+            String tag = null;
             boolean foregroundNotification = false;
 
             Map<String, String> data = remoteMessage.getData();
@@ -137,6 +138,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
                 if(data.containsKey("notification_android_icon")) icon = data.get("notification_android_icon");
                 if(data.containsKey("notification_android_visibility")) visibility = data.get("notification_android_visibility");
                 if(data.containsKey("notification_android_priority")) priority = data.get("notification_android_priority");
+                if(data.containsKey("notification_android_tag")) tag = data.get("notification_android_tag");
             }
 
             if (TextUtils.isEmpty(id)) {
@@ -157,18 +159,19 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Channel Id: " + channelId);
             Log.d(TAG, "Visibility: " + visibility);
             Log.d(TAG, "Priority: " + priority);
+            Log.d(TAG, "Tag: " + priority);
 
 
             if (!TextUtils.isEmpty(body) || !TextUtils.isEmpty(title) || (data != null && !data.isEmpty())) {
                 boolean showNotification = (FirebasePlugin.inBackground() || !FirebasePlugin.hasNotificationsCallback() || foregroundNotification) && (!TextUtils.isEmpty(body) || !TextUtils.isEmpty(title));
-                sendMessage(remoteMessage, data, messageType, id, title, body, showNotification, sound, vibrate, light, color, icon, channelId, priority, visibility);
+                sendMessage(remoteMessage, data, messageType, id, title, body, showNotification, sound, vibrate, light, color, icon, channelId, priority, visibility, tag);
             }
         }catch (Exception e){
             FirebasePlugin.handleExceptionWithoutContext(e);
         }
     }
 
-    private void sendMessage(RemoteMessage remoteMessage, Map<String, String> data, String messageType, String id, String title, String body, boolean showNotification, String sound, String vibrate, String light, String color, String icon, String channelId, String priority, String visibility) {
+    private void sendMessage(RemoteMessage remoteMessage, Map<String, String> data, String messageType, String id, String title, String body, boolean showNotification, String sound, String vibrate, String light, String color, String icon, String channelId, String priority, String visibility, String tag) {
         Log.d(TAG, "sendMessage(): messageType="+messageType+"; showNotification="+showNotification+"; id="+id+"; title="+title+"; body="+body+"; sound="+sound+"; vibrate="+vibrate+"; light="+light+"; color="+color+"; icon="+icon+"; channel="+channelId+"; data="+data.toString());
         Bundle bundle = new Bundle();
         for (String key : data.keySet()) {
@@ -330,11 +333,17 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
 
             // Build notification
             Notification notification = notificationBuilder.build();
+            // hard-coded zero to be consistent with Google FCM's default behaviour and
+            // it enables to bulk delete notifications with the same tag.
+            int notificationId = 0;
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            // Clear active notifications with the same tag
+            notificationManager.cancel(tag, notificationId);
 
             // Display notification
-            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             Log.d(TAG, "show notification: "+notification.toString());
-            notificationManager.notify(id.hashCode(), notification);
+            notificationManager.notify(tag, notificationId, notification);
         }
         // Send to plugin
         FirebasePlugin.sendMessage(bundle, this.getApplicationContext());
