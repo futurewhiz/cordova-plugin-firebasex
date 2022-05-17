@@ -198,7 +198,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Priority: " + priority);
             Log.d(TAG, "Image: " + image);
             Log.d(TAG, "image Type: " + imageType);
-            Log.d(TAG, "Tag: " + priority);
+            Log.d(TAG, "Tag: " + tag);
 
 
             if (!TextUtils.isEmpty(body) || !TextUtils.isEmpty(title) || (data != null && !data.isEmpty())) {
@@ -401,10 +401,12 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
 
             // Build notification
             Notification notification = notificationBuilder.build();
+
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
             // hard-coded zero to be consistent with Google FCM's default behaviour and
             // it enables to bulk delete notifications with the same tag.
             int notificationId = 0;
-            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
             // Clear active notifications with the same tag
             notificationManager.cancel(tag, notificationId);
