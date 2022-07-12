@@ -16,6 +16,7 @@ var ensureBoolean = function(value){
 };
 
 var onAuthStateChangeCallback = function(){};
+var onInstallationIdChangeCallback = function(){};
 
 /***********************
  * Protected internals
@@ -24,15 +25,15 @@ exports._onAuthStateChange = function(userSignedIn){
     onAuthStateChangeCallback(userSignedIn);
 };
 
+exports._onInstallationIdChangeCallback = function(installationId){
+    onInstallationIdChangeCallback(installationId);
+};
+
 /**************
  * Public API
  **************/
 
 // Notifications
-exports.getId = function (success, error) {
-  exec(success, error, "FirebasePlugin", "getId", []);
-};
-
 exports.getToken = function (success, error) {
   exec(success, error, "FirebasePlugin", "getToken", []);
 };
@@ -74,6 +75,10 @@ exports.setAutoInitEnabled = function (enabled, success, error) {
 };
 
 // Notifications - iOS-only
+exports.onOpenSettings = function (success, error) {
+  exec(success, error, "FirebasePlugin", "onOpenSettings", []);
+};
+
 exports.setBadgeNumber = function (number, success, error) {
     exec(success, error, "FirebasePlugin", "setBadgeNumber", [number]);
 };
@@ -82,12 +87,20 @@ exports.getBadgeNumber = function (success, error) {
     exec(success, error, "FirebasePlugin", "getBadgeNumber", []);
 };
 
-exports.grantPermission = function (success, error) {
-    exec(ensureBooleanFn(success), error, "FirebasePlugin", "grantPermission", []);
+exports.grantPermission = function (success, error, requestWithProvidesAppNotificationSettings) {
+    exec(ensureBooleanFn(success), error, "FirebasePlugin", "grantPermission", [ensureBoolean(requestWithProvidesAppNotificationSettings)]);
+};
+
+exports.grantCriticalPermission = function (success, error) {
+    exec(ensureBooleanFn(success), error, "FirebasePlugin", "grantCriticalPermission", []);
 };
 
 exports.hasPermission = function (success, error) {
     exec(ensureBooleanFn(success), error, "FirebasePlugin", "hasPermission", []);
+};
+
+exports.hasCriticalPermission = function (success, error) {
+    exec(ensureBooleanFn(success), error, "FirebasePlugin", "hasCriticalPermission", []);
 };
 
 // Notifications - Android-only
@@ -334,8 +347,8 @@ exports.updateUserEmail = function (email, success, error) {
     exec(success, error, "FirebasePlugin", "updateUserEmail", [email]);
 };
 
-exports.sendUserEmailVerification = function (success, error) {
-    exec(success, error, "FirebasePlugin", "sendUserEmailVerification", []);
+exports.sendUserEmailVerification = function (actionCodeSettings, success, error) {
+    exec(success, error, "FirebasePlugin", "sendUserEmailVerification", [actionCodeSettings]);
 };
 
 exports.updateUserPassword = function (password, success, error) {
@@ -355,6 +368,14 @@ exports.deleteUser = function (success, error) {
 exports.registerAuthStateChangeListener = function(fn){
     if(typeof fn !== "function") throw "The specified argument must be a function";
     onAuthStateChangeCallback = fn;
+};
+
+exports.useAuthEmulator = function (host, port, success, error) {
+    exec(success, error, "FirebasePlugin", "useAuthEmulator", [host, port]);
+};
+
+exports.getClaims = function (success, error) {
+    exec(success, error, "FirebasePlugin", "getClaims", []);
 };
 
 // Firestore
@@ -427,4 +448,31 @@ exports.removeFirestoreListener = function (success, error, listenerId) {
     if(typeof listenerId === 'undefined') return error("'listenerId' must be specified");
 
     exec(success, error, "FirebasePlugin", "removeFirestoreListener", [listenerId.toString()]);
+};
+
+exports.functionsHttpsCallable = function (name, args, success, error) {
+  if(typeof name !== 'string') return error("'collection' must be a string specifying the Firestore collection name");
+  exec(success, error, "FirebasePlugin", "functionsHttpsCallable", [name, args]);
+};
+
+// Installations
+exports.getId = function (success, error) {
+    exec(success, error, "FirebasePlugin", "getId", []);
+};
+
+exports.getInstallationId = function (success, error) {
+    exec(success, error, "FirebasePlugin", "getInstallationId", []);
+};
+
+exports.getInstallationToken = function (success, error) {
+    exec(success, error, "FirebasePlugin", "getInstallationToken", []);
+};
+
+exports.deleteInstallationId = function (success, error) {
+    exec(success, error, "FirebasePlugin", "deleteInstallationId", []);
+};
+
+exports.registerInstallationIdChangeListener = function(fn){
+    if(typeof fn !== "function") throw "The specified argument must be a function";
+    onInstallationIdChangeCallback = fn;
 };
