@@ -240,9 +240,20 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
         this.putKVInBundle("ttl", String.valueOf(remoteMessage.getTtl()), bundle);
 
         if (showNotification) {
-            Intent intent = new Intent(this, OnNotificationOpenReceiver.class);
-            intent.putExtras(bundle);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, id.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            Intent intent;
+            PendingIntent pendingIntent;
+            final int flag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;  // Only add on platform levels that support FLAG_MUTABLE
+
+            if(getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.S && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                intent = new Intent(this, OnNotificationReceiverActivity.class);
+                intent.putExtras(bundle);
+                pendingIntent = PendingIntent.getActivity(this, id.hashCode(), intent, flag);
+            }else{
+                intent = new Intent(this, OnNotificationOpenReceiver.class);
+                intent.putExtras(bundle);
+                pendingIntent = PendingIntent.getBroadcast(this, id.hashCode(), intent, flag);
+            }
 
             // Channel
             if(channelId == null || !FirebasePlugin.channelExists(channelId)){
