@@ -175,7 +175,6 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
                 if(data.containsKey("notification_android_icon")) icon = data.get("notification_android_icon");
                 if(data.containsKey("notification_android_visibility")) visibility = data.get("notification_android_visibility");
                 if(data.containsKey("notification_android_priority")) priority = data.get("notification_android_priority");
-                if(data.containsKey("notification_android_tag")) tag = data.get("notification_android_tag");
                 if(data.containsKey("notification_android_image")) image = data.get("notification_android_image");
                 if(data.containsKey("notification_android_image_type")) imageType = data.get("notification_android_image_type");
                 if(data.containsKey("notification_android_tag")) tag = data.get("notification_android_tag");
@@ -241,21 +240,9 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
         this.putKVInBundle("ttl", String.valueOf(remoteMessage.getTtl()), bundle);
 
         if (showNotification) {
-
-            Intent intent;
-            PendingIntent pendingIntent;
-            final int flag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;  // Only add on platform levels that support FLAG_MUTABLE
-
-            if(getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.S && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                intent = new Intent(this, OnNotificationReceiverActivity.class);
-                intent.putExtras(bundle);
-                pendingIntent = PendingIntent.getActivity(this, id.hashCode(), intent, flag);
-            }else{
-                intent = new Intent(this, OnNotificationOpenReceiver.class);
-                intent.putExtras(bundle);
-                pendingIntent = PendingIntent.getBroadcast(this, id.hashCode(), intent, flag);
-            }
-
+            Intent intent = new Intent(this, OnNotificationOpenReceiver.class);
+            intent.putExtras(bundle);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, id.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
             // Channel
             if(channelId == null || !FirebasePlugin.channelExists(channelId)){
@@ -264,6 +251,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
                 Log.d(TAG, "Channel ID: "+channelId);
             }
+
 
 
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, channelId);
@@ -358,14 +346,14 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
 
                 int largeIconResID;
                 if (customLargeIconResID != 0 || defaultLargeIconResID != 0) {
-                    if (customLargeIconResID != 0) {
-                        largeIconResID = customLargeIconResID;
-                        Log.d(TAG, "Large icon: custom="+icon);
-                    }else{
-                        Log.d(TAG, "Large icon: default="+defaultLargeIconName);
-                        largeIconResID = defaultLargeIconResID;
-                    }
-                    notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(getApplicationContext().getResources(), largeIconResID));
+					if (customLargeIconResID != 0) {
+	                    largeIconResID = customLargeIconResID;
+	                    Log.d(TAG, "Large icon: custom="+icon);
+	                }else{
+	                    Log.d(TAG, "Large icon: default="+defaultLargeIconName);
+	                    largeIconResID = defaultLargeIconResID;
+	                }
+	                notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(getApplicationContext().getResources(), largeIconResID));
                 }
             }
 
@@ -412,6 +400,7 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Priority: " + iPriority);
             notificationBuilder.setPriority(iPriority);
 
+
             // Build notification
             Notification notification = notificationBuilder.build();
             // hard-coded zero to be consistent with Google FCM's default behaviour and
@@ -421,14 +410,6 @@ public class FirebasePluginMessagingService extends FirebaseMessagingService {
 
             // Clear active notifications with the same tag
             notificationManager.cancel(tag, notificationId);
-
-             // hard-coded zero to be consistent with Google FCM's default behaviour and
-             // it enables to bulk delete notifications with the same tag.
-             int notificationId = 0;
-             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-             // Clear active notifications with the same tag
-             notificationManager.cancel(tag, notificationId);
 
             // Display notification
             Log.d(TAG, "show notification: "+notification.toString());
