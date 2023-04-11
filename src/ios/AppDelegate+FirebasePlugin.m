@@ -110,12 +110,22 @@ static bool authStateChangeListenerInitialized = false;
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     self.applicationInBackground = @(NO);
-    [FirebasePlugin.firebasePlugin _logMessage:@"Enter foreground"];
+    @try {
+        [FirebasePlugin.firebasePlugin _logMessage:@"Enter foreground"];
+        [FirebasePlugin.firebasePlugin executeGlobalJavascript:@"FirebasePlugin._applicationDidBecomeActive()"];
+    }@catch (NSException *exception) {
+        [FirebasePlugin.firebasePlugin handlePluginExceptionWithoutContext:exception];
+    }
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     self.applicationInBackground = @(YES);
-    [FirebasePlugin.firebasePlugin _logMessage:@"Enter background"];
+    @try {
+        [FirebasePlugin.firebasePlugin _logMessage:@"Enter background"];
+        [FirebasePlugin.firebasePlugin executeGlobalJavascript:@"FirebasePlugin._applicationDidEnterBackground()"];
+    }@catch (NSException *exception) {
+        [FirebasePlugin.firebasePlugin handlePluginExceptionWithoutContext:exception];
+    }
 }
 
 
